@@ -53,13 +53,36 @@ devex dev              # foreground
 devex dev --detach     # background (adds -d for docker compose)
 ```
 
-### Query funding status
+### Inspect dependencies and propose a split
+
+```bash
+devex funding inspect
+devex funding inspect --manifest ./go.mod --top-n 15
+devex funding inspect --json    # structured JSON output
+```
+
+### Generate local split configuration (.devex.drips.yaml)
+
+```bash
+devex funding generate
+devex funding generate --output .devex.drips.yaml --force
+```
+
+Generates a version-controlled `.devex.drips.yaml` file. You can manually adjust percentages or set `locked: true` on any entry to prevent future `generate` runs from overwriting that allocation.
+
+### Query live on-chain funding status
 
 ```bash
 devex funding status
-devex funding status --account-id 0xYourAddress
+devex funding status --drips-id drips:1:myproject
+devex funding status --address 0xYourAddress
 devex funding status --json    # structured JSON output
 ```
+
+Displays real-time on-chain telemetry from the Drips Subgraph, including:
+- **Current Balance**: Splittable and Collectable balances.
+- **Incoming Streams**: Active senders and streaming rates (wei/sec and ~monthly ETH).
+- **Active On-Chain Splits**: Current split rules configured on the contract.
 
 ### Configure split rules
 
@@ -131,6 +154,8 @@ devex-cli/
 │   ├── init.go                 # devex init
 │   ├── dev.go                  # devex dev
 │   ├── funding.go              # devex funding (parent)
+│   ├── funding_inspect.go      # devex funding inspect
+│   ├── funding_generate.go     # devex funding generate
 │   ├── funding_status.go       # devex funding status
 │   └── funding_split.go        # devex funding split
 │
@@ -141,11 +166,19 @@ devex-cli/
 │       └── logger.go           # Structured logging
 │
 └── pkg/                        # Public, reusable packages
-    └── drips/
-        ├── client.go           # Drips Network client (RPC connection)
-        ├── types.go            # Domain types (StreamInfo, SplitEntry, etc.)
-        ├── streams.go          # Stream query operations
-        └── splits.go           # Split management + balance queries
+    ├── drips/
+    │   ├── client.go           # Drips Network client (RPC connection)
+    │   ├── config.go           # Local DripsConfigFile (.devex.drips.yaml) schema & merge logic
+    │   ├── resolver.go         # RegistryResolver for dependency mapping
+    │   ├── subgraph.go         # GraphQL Subgraph client & on-chain telemetry
+    │   ├── types.go            # Domain types (StreamInfo, SplitEntry, etc.)
+    │   ├── streams.go          # Stream query operations
+    │   └── splits.go           # Split management + balance queries
+    └── parser/
+        ├── parser.go           # Parser interface & core types
+        ├── detect.go           # Auto-detection of manifest format
+        ├── gomod.go            # go.mod parser implementation
+        └── packagejson.go      # package.json parser implementation
 ```
 
 ---

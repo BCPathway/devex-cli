@@ -14,7 +14,8 @@ split configurations, and querying on-chain funding state.
 
 Subcommands:
   inspect   Scan dependencies and propose a Drips funding split
-  status    Query current Drips streams and split configurations
+  generate  Generate a local version-controlled Drips split configuration
+  status    Query live Drips Network on-chain state and incoming funding telemetry
   split     Configure or preview Drips split rules`,
 }
 
