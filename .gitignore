@@ -1,0 +1,22 @@
+# Binaries
+bin/
+*.exe
+devex
+
+# Go
+*.test
+coverage.out
+
+# Config secrets — never commit real config
+.devex.yaml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
