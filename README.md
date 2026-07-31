@@ -84,6 +84,32 @@ Displays real-time on-chain telemetry from the Drips Subgraph, including:
 - **Incoming Streams**: Active senders and streaming rates (wei/sec and ~monthly ETH).
 - **Active On-Chain Splits**: Current split rules configured on the contract.
 
+### Secure Wallet Management (OS Keychain)
+
+```bash
+devex wallet import      # securely prompt for and store your private key
+devex wallet address     # display Ethereum address of stored key
+devex wallet remove      # remove stored key from keychain
+```
+
+### State Diff Engine (Git-style splits comparison)
+
+```bash
+devex funding diff
+devex funding diff --json
+```
+
+Compares local `.devex.drips.yaml` against live on-chain splits and outputs color-coded percentage changes (`+ ADDED`, `- REMOVED`, `~ MODIFIED`, `= UNCHANGED`).
+
+### Execute on-chain splits synchronization
+
+```bash
+devex funding sync
+devex funding sync --yes    # skip interactive confirmation prompt
+```
+
+Estimates gas costs, displays a safety warning, prompts for confirmation, and executes the smart contract transaction on Drips Network to synchronize your on-chain splits.
+
 ### Configure split rules
 
 ```bash
@@ -156,8 +182,11 @@ devex-cli/
 │   ├── funding.go              # devex funding (parent)
 │   ├── funding_inspect.go      # devex funding inspect
 │   ├── funding_generate.go     # devex funding generate
+│   ├── funding_diff.go         # devex funding diff
+│   ├── funding_sync.go         # devex funding sync
 │   ├── funding_status.go       # devex funding status
-│   └── funding_split.go        # devex funding split
+│   ├── funding_split.go        # devex funding split
+│   └── wallet.go               # devex wallet (import, remove, address)
 │
 ├── internal/                   # Private application packages
 │   ├── config/
@@ -169,11 +198,15 @@ devex-cli/
     ├── drips/
     │   ├── client.go           # Drips Network client (RPC connection)
     │   ├── config.go           # Local DripsConfigFile (.devex.drips.yaml) schema & merge logic
+    │   ├── diff.go             # State diff engine (Git-style splits comparison)
     │   ├── resolver.go         # RegistryResolver for dependency mapping
     │   ├── subgraph.go         # GraphQL Subgraph client & on-chain telemetry
+    │   ├── tx.go               # On-chain setSplits transaction builder & gas estimator
     │   ├── types.go            # Domain types (StreamInfo, SplitEntry, etc.)
     │   ├── streams.go          # Stream query operations
     │   └── splits.go           # Split management + balance queries
+    ├── keychain/
+    │   └── keychain.go         # Secure wallet private key management via OS keychain
     └── parser/
         ├── parser.go           # Parser interface & core types
         ├── detect.go           # Auto-detection of manifest format
