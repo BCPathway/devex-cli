@@ -13,6 +13,7 @@ with the Drips Network — inspecting active drip streams, managing
 split configurations, and querying on-chain funding state.
 
 Subcommands:
+  inspect   Scan dependencies and propose a Drips funding split
   status    Query current Drips streams and split configurations
   split     Configure or preview Drips split rules`,
 }
