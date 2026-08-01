@@ -77,3 +77,64 @@ type Parser interface {
 	// Type returns the manifest type this parser handles.
 	Type() ManifestType
 }
+
+// WorkspaceType identifies the monorepo workspace manager format.
+type WorkspaceType string
+
+const (
+	WorkspacePNPM    WorkspaceType = "pnpm"
+	WorkspaceNPMYarn WorkspaceType = "npm/yarn"
+	WorkspaceLerna   WorkspaceType = "lerna"
+	WorkspaceGoWork  WorkspaceType = "go.work"
+	WorkspaceNone    WorkspaceType = "none"
+)
+
+// SubPackage represents a single discovered package within a monorepo.
+type SubPackage struct {
+	// Dir is the absolute path to the sub-package directory.
+	Dir string `json:"dir"`
+
+	// Name is the package/module name from its manifest.
+	Name string `json:"name"`
+
+	// ManifestType is the type of manifest file found in this sub-package.
+	ManifestType ManifestType `json:"manifest_type"`
+
+	// Dependencies are the raw dependencies parsed from this sub-package.
+	Dependencies []Dependency `json:"dependencies"`
+}
+
+// AggregatedDependency extends Dependency with metadata about which
+// sub-packages require it. Used in the unified monorepo dependency list.
+type AggregatedDependency struct {
+	Dependency
+
+	// RequiredBy lists the names of sub-packages that depend on this package.
+	RequiredBy []string `json:"required_by"`
+}
+
+// ProjectResult is the top-level result returned by ParseProject. It
+// transparently handles both single-package and monorepo layouts.
+type ProjectResult struct {
+	// IsMonorepo is true when a workspace configuration was detected.
+	IsMonorepo bool `json:"is_monorepo"`
+
+	// WorkspaceType identifies the workspace manager (only set for monorepos).
+	WorkspaceType WorkspaceType `json:"workspace_type"`
+
+	// RootDir is the absolute path to the project root.
+	RootDir string `json:"root_dir"`
+
+	// SubPackages contains the parsed results for each discovered sub-package.
+	// Only populated for monorepo projects.
+	SubPackages []SubPackage `json:"sub_packages,omitempty"`
+
+	// Dependencies is the unified, deduplicated, external-only dependency
+	// list. For single-package repos this comes directly from the manifest;
+	// for monorepos it is aggregated across all sub-packages.
+	Dependencies []AggregatedDependency `json:"dependencies"`
+
+	// SingleResult is the raw ParseResult when the project is a single-package
+	// repository. Nil for monorepos.
+	SingleResult *ParseResult `json:"single_result,omitempty"`
+}

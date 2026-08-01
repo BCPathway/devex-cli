@@ -3,6 +3,7 @@ module github.com/BCPathway/devex-cli
 go 1.22
 
 require (
+	github.com/bmatcuk/doublestar/v4 v4.10.0
 	github.com/ethereum/go-ethereum v1.14.7
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
