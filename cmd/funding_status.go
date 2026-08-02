@@ -5,28 +5,29 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"strings"
 
 	"github.com/BCPathway/devex-cli/internal/logger"
 	"github.com/BCPathway/devex-cli/pkg/drips"
+	"github.com/BCPathway/devex-cli/pkg/stellar"
 	"github.com/spf13/cobra"
 )
 
 var fundingStatusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Query live Drips Network on-chain state and incoming funding telemetry",
-	Long: `Connects to the Drips Network Subgraph/API to retrieve the real-time,
-on-chain state of the project's funding:
-  - Current Balance (splittable and collectable funds)
-  - Incoming Streams (active senders and streaming rates)
+	Short: "Query live Drips or Stellar Network on-chain state and incoming funding telemetry",
+	Long: `Connects to the Drips Network Subgraph or Stellar Horizon API to retrieve the
+real-time, on-chain state of the project's funding:
+  - Current Balance (XLM or tokens / splittable and collectable funds)
+  - Incoming Payments / Streams (active contributors or streaming rates)
   - Active On-Chain Splits (current split receivers and percentages)
 
-If neither --drips-id nor --address is provided, the command automatically
-reads 'project_id' from the local .devex.drips.yaml file.
+Use --network stellar to query a Stellar project account.
 
 Examples:
   devex funding status
+  devex funding status --network stellar --account-id G...
   devex funding status --drips-id drips:1:myproject
-  devex funding status --address 0x1234567890abcdef1234567890abcdef12345678
   devex funding status --json`,
 	RunE: runFundingStatus,
 }
@@ -34,15 +35,17 @@ Examples:
 var (
 	statusDripsID   string
 	statusAddress   string
-	statusAccountID string // legacy alias
+	statusAccountID string // legacy alias / Stellar account ID
 	statusConfig    string
+	statusNetwork   string
 )
 
 func init() {
 	fundingStatusCmd.Flags().StringVar(&statusDripsID, "drips-id", "", "Drips Account ID to query")
 	fundingStatusCmd.Flags().StringVar(&statusAddress, "address", "", "Ethereum wallet address to query")
-	fundingStatusCmd.Flags().StringVar(&statusAccountID, "account-id", "", "alias for --drips-id")
-	fundingStatusCmd.Flags().StringVar(&statusConfig, "config-path", ".devex.drips.yaml", "path to local Drips configuration file")
+	fundingStatusCmd.Flags().StringVar(&statusAccountID, "account-id", "", "Stellar or Drips Account ID to query")
+	fundingStatusCmd.Flags().StringVar(&statusConfig, "config-path", "", "path to local configuration file (default .devex.drips.yaml or .devex.stellar.yaml)")
+	fundingStatusCmd.Flags().StringVar(&statusNetwork, "network", "drips", "target network: 'drips' (Ethereum) or 'stellar'")
 
 	fundingCmd.AddCommand(fundingStatusCmd)
 }
@@ -50,6 +53,42 @@ func init() {
 func runFundingStatus(cmd *cobra.Command, args []string) error {
 	if appConfig == nil {
 		return fmt.Errorf("no configuration loaded — run 'devex init' first")
+	}
+
+	if statusNetwork == "stellar" {
+		cfgPath := statusConfig
+		if cfgPath == "" {
+			cfgPath = ".devex.stellar.yaml"
+		}
+		targetID := resolveStellarStatusTargetID(cfgPath)
+		if targetID == "" {
+			return fmt.Errorf("no Stellar Account ID specified — pass --account-id, create %s with 'devex funding generate --network stellar', or set stellar.account_id in config", cfgPath)
+		}
+
+		logger.Info("📡  querying Stellar Horizon telemetry for %s…", targetID)
+		client, err := stellar.NewClient(stellar.ClientConfig{
+			HorizonURL:        appConfig.Stellar.HorizonURL,
+			NetworkPassphrase: appConfig.Stellar.NetworkPassphrase,
+			AccountID:         targetID,
+		})
+		if err != nil {
+			return fmt.Errorf("initialising Stellar client: %w", err)
+		}
+		defer client.Close()
+
+		telemetry, err := client.QueryStatusTelemetry(targetID)
+		if err != nil {
+			return fmt.Errorf("querying Stellar telemetry: %w", err)
+		}
+
+		printOutput(telemetry, func() {
+			renderStellarStatusTelemetryUI(telemetry)
+		})
+		return nil
+	}
+
+	if statusConfig == "" {
+		statusConfig = ".devex.drips.yaml"
 	}
 
 	targetID := resolveStatusTargetID()
@@ -178,4 +217,61 @@ func formatWeiPerSecToMonthly(amtPerSec, symbol string) string {
 	monthlyEth, _ := new(big.Float).SetInt(monthlyWei).Quo(new(big.Float).SetInt(monthlyWei), ethDiv).Float64()
 
 	return fmt.Sprintf("~%.2f %s/month", monthlyEth, symbol)
+}
+
+func resolveStellarStatusTargetID(configPath string) string {
+	if statusAccountID != "" {
+		return statusAccountID
+	}
+	if statusDripsID != "" {
+		return statusDripsID
+	}
+
+	if _, err := os.Stat(configPath); err == nil {
+		if localCfg, loadErr := stellar.LoadStellarConfig(configPath); loadErr == nil && localCfg.AccountID != "" {
+			logger.Debug("status: using account_id %q from %s", localCfg.AccountID, configPath)
+			return localCfg.AccountID
+		}
+	}
+
+	if appConfig != nil && appConfig.Stellar.AccountID != "" {
+		return appConfig.Stellar.AccountID
+	}
+
+	return ""
+}
+
+func renderStellarStatusTelemetryUI(t *stellar.StellarStatusTelemetry) {
+	fmt.Println()
+	fmt.Printf("  📡  Stellar Network On-Chain Telemetry (%s)\n", strings.ToUpper(t.Network))
+	fmt.Printf("  Account:  %s\n", t.AccountID)
+	if t.Source != "" {
+		fmt.Printf("  Source:   %s\n", t.Source)
+	}
+	fmt.Println()
+
+	// ── Section 1: Current Balance ────────────────────────────────────
+	fmt.Printf("  ┌────────────────────────────────────────────────────────────────────────┐\n")
+	fmt.Printf("  │  💰  CURRENT BALANCE                                                   │\n")
+	fmt.Printf("  ├────────────────────────────────────────────────────────────────────────┤\n")
+	fmt.Printf("  │  Native XLM Balance:   %-48s│\n", t.XLMBalance)
+	for _, ob := range t.OtherBalances {
+		fmt.Printf("  │  %-21s %-48s│\n", truncate(ob.Asset, 21)+":", ob.Balance)
+	}
+	fmt.Printf("  └────────────────────────────────────────────────────────────────────────┘\n")
+	fmt.Println()
+
+	// ── Section 2: Incoming Payments / History ────────────────────────
+	fmt.Printf("  ┌────────────────────────────────────────────────────────────────────────┐\n")
+	fmt.Printf("  │  🌊  RECENT INCOMING PAYMENTS (%d found)                                │\n", len(t.RecentPayments))
+	fmt.Printf("  ├────────────────────────────────────────────────────────────────────────┤\n")
+	if len(t.RecentPayments) == 0 {
+		fmt.Printf("  │  (No recent incoming payments found)                                   │\n")
+	} else {
+		for i, p := range t.RecentPayments {
+			fmt.Printf("  │  %d. From: %-28s Amount: %-22s│\n", i+1, truncate(p.From, 28), p.Amount+" "+p.Asset)
+		}
+	}
+	fmt.Printf("  └────────────────────────────────────────────────────────────────────────┘\n")
+	fmt.Println()
 }

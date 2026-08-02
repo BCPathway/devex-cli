@@ -14,6 +14,7 @@ import (
 type Config struct {
 	Project ProjectConfig `yaml:"project" json:"project" mapstructure:"project"`
 	Drips   DripsConfig   `yaml:"drips"   json:"drips"   mapstructure:"drips"`
+	Stellar StellarConfig `yaml:"stellar" json:"stellar" mapstructure:"stellar"`
 	Dev     DevConfig     `yaml:"dev"     json:"dev"     mapstructure:"dev"`
 }
 
@@ -29,6 +30,14 @@ type DripsConfig struct {
 	ChainID       int    `yaml:"chain_id"       json:"chain_id"       mapstructure:"chain_id"`
 	WalletAddress string `yaml:"wallet_address" json:"wallet_address" mapstructure:"wallet_address"`
 	PrivateKey    string `yaml:"private_key"    json:"-"              mapstructure:"private_key"` // never serialise
+}
+
+// StellarConfig holds Stellar Network connection settings.
+type StellarConfig struct {
+	HorizonURL        string `yaml:"horizon_url"        json:"horizon_url"        mapstructure:"horizon_url"`
+	NetworkPassphrase string `yaml:"network_passphrase" json:"network_passphrase" mapstructure:"network_passphrase"`
+	AccountID         string `yaml:"account_id"         json:"account_id"         mapstructure:"account_id"`
+	SecretKey         string `yaml:"secret_key"         json:"-"                  mapstructure:"secret_key"` // never serialise
 }
 
 // DevConfig holds local development environment settings.
@@ -89,6 +98,10 @@ func Default() *Config {
 			RPCEndpoint: "https://mainnet.optimism.io",
 			ChainID:     10,
 		},
+		Stellar: StellarConfig{
+			HorizonURL:        "https://horizon-testnet.stellar.org",
+			NetworkPassphrase: "Test SDF Network ; September 2015",
+		},
 		Dev: DevConfig{
 			StartCommand: "docker compose up",
 		},
@@ -99,10 +112,14 @@ func Default() *Config {
 // These supplement the automatic DEVEX_ prefix binding.
 func bindEnvVars(v *viper.Viper) {
 	envMap := map[string]string{
-		"drips.rpc_endpoint":   "DRIPS_NETWORK_RPC",
-		"drips.private_key":    "DRIPS_PRIVATE_KEY",
-		"drips.wallet_address": "DRIPS_WALLET_ADDRESS",
-		"drips.chain_id":       "DRIPS_CHAIN_ID",
+		"drips.rpc_endpoint":         "DRIPS_NETWORK_RPC",
+		"drips.private_key":          "DRIPS_PRIVATE_KEY",
+		"drips.wallet_address":       "DRIPS_WALLET_ADDRESS",
+		"drips.chain_id":             "DRIPS_CHAIN_ID",
+		"stellar.horizon_url":        "STELLAR_HORIZON_URL",
+		"stellar.network_passphrase": "STELLAR_NETWORK_PASSPHRASE",
+		"stellar.account_id":         "STELLAR_ACCOUNT_ID",
+		"stellar.secret_key":         "STELLAR_SECRET_KEY",
 	}
 	for key, env := range envMap {
 		_ = v.BindEnv(key, env)

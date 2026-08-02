@@ -15,46 +15,55 @@ import (
 
 var walletCmd = &cobra.Command{
 	Use:   "wallet",
-	Short: "Manage Drips Network wallet private keys securely in the OS keychain",
+	Short: "Manage Drips & Stellar private/secret keys securely in the OS keychain",
 	Long: `The wallet command group provides secure storage and management of your
-private key using your operating system's native credential manager
+private/secret keys using your operating system's native credential manager
 (macOS Keychain, Linux Secret Service, or Windows Credential Manager).
 
 Private keys are never saved in plain text on disk. You can also override
-keychain storage by setting the DRIPS_PRIVATE_KEY environment variable.
+keychain storage by setting DRIPS_PRIVATE_KEY or STELLAR_SECRET_KEY env vars.
+
+Use --network stellar on any subcommand to manage your Stellar secret seed.
 
 Subcommands:
-  import    Securely import a private key into the OS keychain
+  import    Securely import a private key or secret seed into the OS keychain
   remove    Remove the stored private key from the OS keychain
-  address   Display the Ethereum address of the stored private key`,
+  address   Display the address of the stored private key`,
 }
 
 var walletImportCmd = &cobra.Command{
 	Use:   "import",
-	Short: "Securely import a private key into the OS keychain",
-	Long: `Prompts securely for your secp256k1 Ethereum private key and stores it
+	Short: "Securely import a private key or secret seed into the OS keychain",
+	Long: `Prompts securely for your private key (or Stellar secret seed) and stores it
 in the OS credential manager under the service name 'devex-cli'.
 
-Input is masked while typing. You may also pass --key for scripted imports.`,
+Input is masked while typing. You may also pass --key for scripted imports.
+Use --network stellar to import an Ed25519 Stellar secret seed (S...).`,
 	RunE: runWalletImport,
 }
 
 var walletRemoveCmd = &cobra.Command{
 	Use:   "remove",
 	Short: "Delete the stored private key from the OS keychain",
-	RunE: runWalletRemove,
+	RunE:  runWalletRemove,
 }
 
 var walletAddressCmd = &cobra.Command{
 	Use:   "address",
-	Short: "Display the Ethereum address of the stored private key",
-	RunE: runWalletAddress,
+	Short: "Display the address of the stored private key",
+	RunE:  runWalletAddress,
 }
 
-var importKeyFlag string
+var (
+	importKeyFlag string
+	walletNetwork string
+)
 
 func init() {
 	walletImportCmd.Flags().StringVar(&importKeyFlag, "key", "", "private key hex string (optional; prompt if omitted)")
+	walletImportCmd.Flags().StringVar(&walletNetwork, "network", "drips", "target network: 'drips' (Ethereum) or 'stellar'")
+	walletRemoveCmd.Flags().StringVar(&walletNetwork, "network", "drips", "target network: 'drips' (Ethereum) or 'stellar'")
+	walletAddressCmd.Flags().StringVar(&walletNetwork, "network", "drips", "target network: 'drips' (Ethereum) or 'stellar'")
 
 	walletCmd.AddCommand(walletImportCmd)
 	walletCmd.AddCommand(walletRemoveCmd)
@@ -66,7 +75,7 @@ func init() {
 func runWalletImport(cmd *cobra.Command, args []string) error {
 	key := importKeyFlag
 	if key == "" {
-		fmt.Print("🔑 Enter private key (input will be hidden): ")
+		fmt.Print("🔑 Enter private key / secret seed (input will be hidden): ")
 		if term.IsTerminal(int(os.Stdin.Fd())) {
 			bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
 			fmt.Println() // new line after hidden input
@@ -75,7 +84,6 @@ func runWalletImport(cmd *cobra.Command, args []string) error {
 			}
 			key = string(bytePassword)
 		} else {
-			// Fallback if not attached to a TTY terminal (e.g. piped stdin).
 			reader := bufio.NewReader(os.Stdin)
 			line, err := reader.ReadString('\n')
 			if err != nil {
@@ -90,6 +98,27 @@ func runWalletImport(cmd *cobra.Command, args []string) error {
 		return errors.New("private key cannot be empty")
 	}
 
+	if strings.ToLower(walletNetwork) == "stellar" {
+		logger.Debug("wallet import: validating and storing Stellar key…")
+		if err := keychain.StoreStellarKey(key); err != nil {
+			return fmt.Errorf("failed to store Stellar secret key: %w", err)
+		}
+
+		addr, err := keychain.GetStoredStellarAddress()
+		if err != nil {
+			return fmt.Errorf("key stored but Stellar address derivation failed: %w", err)
+		}
+
+		printOutput(map[string]string{"status": "imported", "network": "stellar", "address": addr}, func() {
+			fmt.Println()
+			fmt.Printf("  ✅  Securely stored Stellar secret key in OS keychain.\n")
+			fmt.Printf("  ─────────────────────────────────────────────────────\n")
+			fmt.Printf("  Stellar Address: %s\n", addr)
+			fmt.Println()
+		})
+		return nil
+	}
+
 	logger.Debug("wallet import: validating and storing key…")
 	if err := keychain.StoreKey(key); err != nil {
 		return fmt.Errorf("failed to store private key: %w", err)
@@ -100,7 +129,7 @@ func runWalletImport(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("key stored but address derivation failed: %w", err)
 	}
 
-	printOutput(map[string]string{"status": "imported", "address": addr}, func() {
+	printOutput(map[string]string{"status": "imported", "network": "drips", "address": addr}, func() {
 		fmt.Println()
 		fmt.Printf("  ✅  Securely stored private key in OS keychain.\n")
 		fmt.Printf("  ─────────────────────────────────────────────────────\n")
@@ -112,11 +141,24 @@ func runWalletImport(cmd *cobra.Command, args []string) error {
 }
 
 func runWalletRemove(cmd *cobra.Command, args []string) error {
+	if strings.ToLower(walletNetwork) == "stellar" {
+		if err := keychain.RemoveStellarKey(); err != nil {
+			return fmt.Errorf("removing Stellar secret key: %w", err)
+		}
+
+		printOutput(map[string]string{"status": "removed", "network": "stellar"}, func() {
+			fmt.Println()
+			fmt.Println("  ✅  Removed Stellar secret key from OS keychain.")
+			fmt.Println()
+		})
+		return nil
+	}
+
 	if err := keychain.RemoveKey(); err != nil {
 		return fmt.Errorf("removing private key: %w", err)
 	}
 
-	printOutput(map[string]string{"status": "removed"}, func() {
+	printOutput(map[string]string{"status": "removed", "network": "drips"}, func() {
 		fmt.Println()
 		fmt.Println("  ✅  Removed private key from OS keychain.")
 		fmt.Println()
@@ -126,6 +168,23 @@ func runWalletRemove(cmd *cobra.Command, args []string) error {
 }
 
 func runWalletAddress(cmd *cobra.Command, args []string) error {
+	if strings.ToLower(walletNetwork) == "stellar" {
+		addr, err := keychain.GetStoredStellarAddress()
+		if err != nil {
+			if errors.Is(err, keychain.ErrNoStellarKeyStored) {
+				return errors.New("no Stellar secret key found — run 'devex wallet import --network stellar' or set STELLAR_SECRET_KEY")
+			}
+			return fmt.Errorf("retrieving stored Stellar address: %w", err)
+		}
+
+		printOutput(map[string]string{"address": addr, "network": "stellar"}, func() {
+			fmt.Println()
+			fmt.Printf("  Stellar Address: %s\n", addr)
+			fmt.Println()
+		})
+		return nil
+	}
+
 	addr, err := keychain.GetStoredAddress()
 	if err != nil {
 		if errors.Is(err, keychain.ErrNoKeyStored) {
@@ -134,7 +193,7 @@ func runWalletAddress(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("retrieving stored wallet address: %w", err)
 	}
 
-	printOutput(map[string]string{"address": addr}, func() {
+	printOutput(map[string]string{"address": addr, "network": "drips"}, func() {
 		fmt.Println()
 		fmt.Printf("  Wallet Address: %s\n", addr)
 		fmt.Println()

@@ -58,6 +58,12 @@ func runInit(cmd *cobra.Command, args []string) error {
 	chainIDStr := prompt(reader, "Chain ID", "10")
 	walletAddress := prompt(reader, "Wallet address (optional)", "")
 
+	// --- Stellar Network settings ---
+	fmt.Println("\n🪐  Stellar Network Configuration")
+	horizonURL := prompt(reader, "Horizon endpoint", "https://horizon-testnet.stellar.org")
+	stellarAccountID := prompt(reader, "Stellar account ID (G... optional)", "")
+	networkPassphrase := prompt(reader, "Network passphrase", "Test SDF Network ; September 2015")
+
 	// --- Dev environment ---
 	fmt.Println("\n🔧  Development Environment")
 	devCmd := prompt(reader, "Dev start command", "docker compose up")
@@ -77,6 +83,11 @@ func runInit(cmd *cobra.Command, args []string) error {
 			RPCEndpoint:   rpcEndpoint,
 			ChainID:       chainID,
 			WalletAddress: walletAddress,
+		},
+		Stellar: config.StellarConfig{
+			HorizonURL:        horizonURL,
+			AccountID:         stellarAccountID,
+			NetworkPassphrase: networkPassphrase,
 		},
 		Dev: config.DevConfig{
 			StartCommand: devCmd,

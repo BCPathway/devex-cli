@@ -123,6 +123,31 @@ devex funding split --add 0xUpstream1=25 --add 0xUpstream2=10 --apply
 devex funding split
 ```
 
+### Stellar Network Integration (`--network stellar`)
+
+All funding commands support the `--network stellar` flag to inspect, generate, diff, and execute funding distributions on the Stellar Network:
+
+```bash
+# Manage Stellar keys in the OS Keychain
+devex wallet import --network stellar
+devex wallet address --network stellar
+
+# Inspect dependencies and propose a Stellar split
+devex funding inspect --network stellar
+
+# Generate a version-controlled .devex.stellar.yaml
+devex funding generate --network stellar
+
+# Check account balance and payment telemetry
+devex funding status --network stellar
+
+# Diff local .devex.stellar.yaml against recorded payments
+devex funding diff --network stellar
+
+# Execute a multi-payment split transaction on Stellar
+devex funding sync --network stellar --amount 50.0000000
+```
+
 ### Global flags
 
 | Flag        | Short | Description                            |

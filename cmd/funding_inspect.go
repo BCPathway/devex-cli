@@ -31,6 +31,7 @@ Examples:
 var (
 	inspectManifest string
 	inspectTopN     int
+	inspectNetwork  string
 )
 
 func init() {
@@ -38,6 +39,8 @@ func init() {
 		"path to manifest file (default: auto-detect in current directory)")
 	fundingInspectCmd.Flags().IntVar(&inspectTopN, "top-n", 20,
 		"limit resolution to top N dependencies")
+	fundingInspectCmd.Flags().StringVar(&inspectNetwork, "network", "drips",
+		"target network: 'drips' (Ethereum) or 'stellar'")
 
 	fundingCmd.AddCommand(fundingInspectCmd)
 }
@@ -68,6 +71,10 @@ func runFundingInspect(cmd *cobra.Command, args []string) error {
 	if len(result.Dependencies) == 0 {
 		fmt.Println("No dependencies found in manifest.")
 		return nil
+	}
+
+	if strings.ToLower(inspectNetwork) == "stellar" {
+		return runStellarFundingInspect(result)
 	}
 
 	// Filter to direct dependencies first, then fill with indirect up to topN.
@@ -368,4 +375,88 @@ func truncateAddress(addr string, maxLen int) string {
 	}
 	// Show first 6 and last 4 characters.
 	return addr[:6] + "…" + addr[len(addr)-4:]
+}
+
+func runStellarFundingInspect(result *parser.ParseResult) error {
+	deps := prioritiseDeps(result.Dependencies, inspectTopN)
+	logger.Info("📡  analysing %d dependencies for Stellar Network split proposal …", len(deps))
+
+	// For Stellar, distribute percentages equally among direct deps, or all if no direct deps.
+	count := len(deps)
+	pctPerDep := 0
+	remainder := 0
+	if count > 0 {
+		pctPerDep = 100 / count
+		remainder = 100 % count
+	}
+
+	type stellarRecipientRow struct {
+		Name    string
+		Version string
+		Pct     int
+	}
+
+	rows := make([]stellarRecipientRow, 0, len(deps))
+	for i, d := range deps {
+		pct := pctPerDep
+		if i == 0 {
+			pct += remainder
+		}
+		rows = append(rows, stellarRecipientRow{
+			Name:    d.Name,
+			Version: d.Version,
+			Pct:     pct,
+		})
+	}
+
+	printOutput(rows, func() {
+		fmt.Println()
+		fmt.Printf("  📦  %s (Stellar Network Proposal)\n", result.ProjectName)
+		fmt.Printf("  Manifest: %s (%s)\n", result.ManifestPath, result.Type)
+		fmt.Println()
+
+		nameW := 44
+		for _, r := range rows {
+			if len(r.Name) > nameW-2 {
+				nameW = len(r.Name) + 2
+			}
+		}
+		if nameW > 56 {
+			nameW = 56
+		}
+
+		totalW := nameW + 14 + 16 + 8 + 18 + 6
+
+		fmt.Printf("  ┌%s┐\n", strings.Repeat("─", totalW))
+		fmt.Printf("  │ %-*s│ %-*s│ %-*s│ %-*s│ %-*s│\n",
+			nameW, " DEPENDENCY",
+			14, " VERSION",
+			16, " STATUS",
+			8, " SPLIT",
+			17, " STELLAR ADDRESS")
+		fmt.Printf("  ├%s┤\n", strings.Repeat("─", totalW))
+
+		for _, r := range rows {
+			name := truncate(r.Name, nameW-2)
+			ver := truncate(r.Version, 12)
+			fmt.Printf("  │ %-*s│ %-*s│ ⬜ %-*s│ %4d%%   │ %-*s│\n",
+				nameW, " "+name,
+				14, " "+ver,
+				13, "UNREGISTERED",
+				r.Pct,
+				17, " —")
+		}
+
+		fmt.Printf("  └%s┘\n", strings.Repeat("─", totalW))
+		fmt.Println()
+		fmt.Printf("  ── Summary ──────────────────────────────────────\n")
+		fmt.Printf("  Dependencies scanned:    %d\n", len(result.Dependencies))
+		fmt.Printf("  Proposed recipients:     %d\n", len(rows))
+		fmt.Printf("  Total suggested split:   100%%\n")
+		fmt.Println()
+		fmt.Println("  💡 Run 'devex funding generate --network stellar' to create .devex.stellar.yaml and assign Stellar recipient addresses.")
+		fmt.Println()
+	})
+
+	return nil
 }

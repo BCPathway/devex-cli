@@ -21,6 +21,22 @@ drips:
   # ⚠️  NEVER commit this — use DRIPS_PRIVATE_KEY env var instead.
   # private_key: ""
 
+stellar:
+  # Stellar Horizon REST API endpoint (Testnet by default).
+  # Override with STELLAR_HORIZON_URL env var.
+  horizon_url: https://horizon-testnet.stellar.org
+
+  # Project Stellar account ID (G... public key).
+  # Override with STELLAR_ACCOUNT_ID env var.
+  account_id: ""
+
+  # Stellar network passphrase.
+  network_passphrase: "Test SDF Network ; September 2015"
+
+  # Secret key for write operations (multi-payment distributions).
+  # ⚠️  NEVER commit this — use STELLAR_SECRET_KEY env var or keychain instead.
+  # secret_key: ""
+
 dev:
   # Command to start the local development environment.
   start_command: docker compose up
