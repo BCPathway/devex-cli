@@ -136,7 +136,7 @@ func renderSplitsDiffUI(configPath string, diff *drips.SplitsDiff) {
 	fmt.Println()
 }
 
-func runStellarFundingDiff(cmd *cobra.Command, args []string) error {
+func runStellarFundingDiff(_ *cobra.Command, _ []string) error {
 	cfgPath := diffConfigPath
 	if cfgPath == "" {
 		cfgPath = ".devex.stellar.yaml"

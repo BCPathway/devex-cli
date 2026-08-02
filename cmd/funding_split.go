@@ -184,7 +184,7 @@ type splitApplyResult struct {
 	Entries []drips.SplitEntry `json:"entries"`
 }
 
-func runStellarFundingSplit(cmd *cobra.Command, args []string) error {
+func runStellarFundingSplit(_ *cobra.Command, _ []string) error {
 	cfgPath := ".devex.stellar.yaml"
 	entries, err := parseStellarSplitEntries(splitAddEntries)
 	if err != nil {

@@ -211,7 +211,7 @@ func renderSyncSuccessUI(txHash string, plan *drips.SyncTxPlan) {
 	fmt.Println()
 }
 
-func runStellarFundingSync(cmd *cobra.Command, args []string) error {
+func runStellarFundingSync(_ *cobra.Command, _ []string) error {
 	cfgPath := syncConfigPath
 	if cfgPath == "" {
 		cfgPath = ".devex.stellar.yaml"

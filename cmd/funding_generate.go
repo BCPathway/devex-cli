@@ -253,7 +253,7 @@ func renderGenerateSuccess(path string, cfg *drips.DripsConfigFile) {
 	fmt.Println()
 }
 
-func runStellarFundingGenerate(cmd *cobra.Command, args []string) error {
+func runStellarFundingGenerate(_ *cobra.Command, _ []string) error {
 	outPath := generateOutput
 	if outPath == "" {
 		outPath = ".devex.stellar.yaml"
