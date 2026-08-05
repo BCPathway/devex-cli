@@ -10,7 +10,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -25,6 +24,7 @@ var (
 	cfgFile        string
 	verbose        bool
 	jsonOutput     bool
+	outputFormat   string
 	ciMode         bool
 	nonInteractive bool
 
@@ -72,7 +72,8 @@ your local environment, and 'devex funding' to manage Drips streams.`,
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./.devex.yaml)")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose/debug output")
-	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "output results as JSON")
+	rootCmd.PersistentFlags().StringVar(&outputFormat, "format", "", "output format: terminal, json, markdown")
+	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "output results as JSON (deprecated, use --format json)")
 	rootCmd.PersistentFlags().BoolVar(&ciMode, "ci", false, "run in CI/non-interactive mode (suppresses prompts and colors)")
 	rootCmd.PersistentFlags().BoolVar(&nonInteractive, "non-interactive", false, "alias for --ci")
 }
@@ -87,16 +88,30 @@ func Execute() error {
 // Shared output helpers
 // --------------------------------------------------------------------------
 
-// printOutput renders data either as JSON or as formatted text depending on
-// the --json flag. This keeps output logic consistent across subcommands.
+// printOutput renders data using the configured OutputFormatter.
 func printOutput(data any, textFormatter func()) {
-	if jsonOutput {
-		enc := json.NewEncoder(os.Stdout)
-		enc.SetIndent("", "  ")
-		if err := enc.Encode(data); err != nil {
-			fmt.Fprintf(os.Stderr, "error: failed to encode JSON: %v\n", err)
+	fmtType := outputFormat
+	if fmtType == "" {
+		if jsonOutput {
+			fmtType = "json"
+		} else if ciMode || nonInteractive {
+			fmtType = "markdown" // CI mode defaults to markdown
+		} else {
+			fmtType = "terminal"
 		}
-		return
 	}
-	textFormatter()
+
+	var formatter OutputFormatter
+	switch fmtType {
+	case "json":
+		formatter = &JSONFormatter{}
+	case "markdown":
+		formatter = &MarkdownFormatter{}
+	default:
+		formatter = &TerminalFormatter{textFormatter: textFormatter}
+	}
+
+	if err := formatter.Format(os.Stdout, data); err != nil {
+		fmt.Fprintf(os.Stderr, "error formatting output: %v\n", err)
+	}
 }

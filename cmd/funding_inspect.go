@@ -112,19 +112,19 @@ func runFundingInspect(cmd *cobra.Command, args []string) error {
 // Output types
 // --------------------------------------------------------------------------
 
-// inspectOutput is the complete structured output for the inspect command.
-type inspectOutput struct {
+// InspectOutput is the complete structured output for the inspect command.
+type InspectOutput struct {
 	Project       string                `json:"project"`
 	ManifestPath  string                `json:"manifest_path"`
 	ManifestType  string                `json:"manifest_type"`
 	TotalScanned  int                   `json:"total_scanned"`
 	TotalResolved int                   `json:"total_resolved"`
 	Recipients    []drips.DripsRecipient `json:"recipients"`
-	Summary       inspectSummary        `json:"summary"`
+	Summary       InspectSummary        `json:"summary"`
 }
 
-// inspectSummary contains aggregate metrics for the scan.
-type inspectSummary struct {
+// InspectSummary contains aggregate metrics for the scan.
+type InspectSummary struct {
 	Verified       int `json:"verified"`
 	Escrowed       int `json:"escrowed"`
 	Unregistered   int `json:"unregistered"`
@@ -135,8 +135,8 @@ type inspectSummary struct {
 // Output construction
 // --------------------------------------------------------------------------
 
-func buildInspectOutput(parseResult *parser.ParseResult, recipients []drips.DripsRecipient) inspectOutput {
-	summary := inspectSummary{}
+func buildInspectOutput(parseResult *parser.ParseResult, recipients []drips.DripsRecipient) InspectOutput {
+	summary := InspectSummary{}
 	for _, r := range recipients {
 		switch r.Status {
 		case drips.StatusVerified:
@@ -155,7 +155,7 @@ func buildInspectOutput(parseResult *parser.ParseResult, recipients []drips.Drip
 		summary.TotalSplitPct = 100
 	}
 
-	return inspectOutput{
+	return InspectOutput{
 		Project:       parseResult.ProjectName,
 		ManifestPath:  parseResult.ManifestPath,
 		ManifestType:  string(parseResult.Type),
@@ -252,7 +252,7 @@ func prioritiseDeps(deps []parser.Dependency, topN int) []parser.Dependency {
 
 // renderInspectTable outputs a formatted terminal table with the inspection
 // results. Uses box-drawing characters for a clean, modern look.
-func renderInspectTable(output inspectOutput) {
+func renderInspectTable(output InspectOutput) {
 	// Header.
 	fmt.Println()
 	fmt.Printf("  📦  %s\n", output.Project)
@@ -377,6 +377,12 @@ func truncateAddress(addr string, maxLen int) string {
 	return addr[:6] + "…" + addr[len(addr)-4:]
 }
 
+type StellarRecipientRow struct {
+	Name    string
+	Version string
+	Pct     int
+}
+
 func runStellarFundingInspect(result *parser.ParseResult) error {
 	deps := prioritiseDeps(result.Dependencies, inspectTopN)
 	logger.Info("📡  analysing %d dependencies for Stellar Network split proposal …", len(deps))
@@ -390,19 +396,13 @@ func runStellarFundingInspect(result *parser.ParseResult) error {
 		remainder = 100 % count
 	}
 
-	type stellarRecipientRow struct {
-		Name    string
-		Version string
-		Pct     int
-	}
-
-	rows := make([]stellarRecipientRow, 0, len(deps))
+	rows := make([]StellarRecipientRow, 0, len(deps))
 	for i, d := range deps {
 		pct := pctPerDep
 		if i == 0 {
 			pct += remainder
 		}
-		rows = append(rows, stellarRecipientRow{
+		rows = append(rows, StellarRecipientRow{
 			Name:    d.Name,
 			Version: d.Version,
 			Pct:     pct,
