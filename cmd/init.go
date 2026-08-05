@@ -8,6 +8,7 @@ import (
 
 	"github.com/BCPathway/devex-cli/internal/config"
 	"github.com/BCPathway/devex-cli/internal/logger"
+	"github.com/BCPathway/devex-cli/internal/ui"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -33,7 +34,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	// Guard against accidental overwrites.
 	if _, err := os.Stat(filename); err == nil {
-		ok, promptErr := confirmOverwrite(filename)
+		ok, promptErr := ui.ConfirmOverwrite(filename)
 		if promptErr != nil {
 			return fmt.Errorf("reading confirmation: %w", promptErr)
 		}
@@ -49,24 +50,24 @@ func runInit(cmd *cobra.Command, args []string) error {
 	fmt.Println(strings.Repeat("─", 48))
 
 	// --- Project metadata ---
-	projectName := prompt(reader, "Project name", inferProjectName())
-	repoURL := prompt(reader, "Repository URL (optional)", "")
+	projectName := ui.Prompt(reader, "Project name", inferProjectName())
+	repoURL := ui.Prompt(reader, "Repository URL (optional)", "")
 
 	// --- Drips Network settings ---
 	fmt.Println("\n📡  Drips Network Configuration")
-	rpcEndpoint := prompt(reader, "RPC endpoint", "https://mainnet.optimism.io")
-	chainIDStr := prompt(reader, "Chain ID", "10")
-	walletAddress := prompt(reader, "Wallet address (optional)", "")
+	rpcEndpoint := ui.Prompt(reader, "RPC endpoint", "https://mainnet.optimism.io")
+	chainIDStr := ui.Prompt(reader, "Chain ID", "10")
+	walletAddress := ui.Prompt(reader, "Wallet address (optional)", "")
 
 	// --- Stellar Network settings ---
 	fmt.Println("\n🪐  Stellar Network Configuration")
-	horizonURL := prompt(reader, "Horizon endpoint", "https://horizon-testnet.stellar.org")
-	stellarAccountID := prompt(reader, "Stellar account ID (G... optional)", "")
-	networkPassphrase := prompt(reader, "Network passphrase", "Test SDF Network ; September 2015")
+	horizonURL := ui.Prompt(reader, "Horizon endpoint", "https://horizon-testnet.stellar.org")
+	stellarAccountID := ui.Prompt(reader, "Stellar account ID (G... optional)", "")
+	networkPassphrase := ui.Prompt(reader, "Network passphrase", "Test SDF Network ; September 2015")
 
 	// --- Dev environment ---
 	fmt.Println("\n🔧  Development Environment")
-	devCmd := prompt(reader, "Dev start command", "docker compose up")
+	devCmd := ui.Prompt(reader, "Dev start command", "docker compose up")
 
 	chainID := 10
 	if _, err := fmt.Sscanf(chainIDStr, "%d", &chainID); err != nil {
@@ -112,34 +113,6 @@ func runInit(cmd *cobra.Command, args []string) error {
 // --------------------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------------------
-
-// prompt displays a labelled input prompt with an optional default value.
-func prompt(r *bufio.Reader, label, defaultVal string) string {
-	if defaultVal != "" {
-		fmt.Printf("  %s [%s]: ", label, defaultVal)
-	} else {
-		fmt.Printf("  %s: ", label)
-	}
-
-	line, _ := r.ReadString('\n')
-	line = strings.TrimSpace(line)
-	if line == "" {
-		return defaultVal
-	}
-	return line
-}
-
-// confirmOverwrite asks the user whether to overwrite an existing file.
-func confirmOverwrite(path string) (bool, error) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf("⚠️  %s already exists. Overwrite? [y/N]: ", path)
-	answer, err := reader.ReadString('\n')
-	if err != nil {
-		return false, err
-	}
-	answer = strings.TrimSpace(strings.ToLower(answer))
-	return answer == "y" || answer == "yes", nil
-}
 
 // inferProjectName derives a default project name from the current directory.
 func inferProjectName() string {

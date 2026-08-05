@@ -15,15 +15,18 @@ import (
 	"os"
 
 	"github.com/BCPathway/devex-cli/internal/config"
+	"github.com/BCPathway/devex-cli/internal/env"
 	"github.com/BCPathway/devex-cli/internal/logger"
 	"github.com/spf13/cobra"
 )
 
 var (
 	// Persistent flag values bound at the root level.
-	cfgFile    string
-	verbose    bool
-	jsonOutput bool
+	cfgFile        string
+	verbose        bool
+	jsonOutput     bool
+	ciMode         bool
+	nonInteractive bool
 
 	// Global application config, hydrated during PersistentPreRun.
 	appConfig *config.Config
@@ -45,6 +48,12 @@ your local environment, and 'devex funding' to manage Drips streams.`,
 		// Initialise structured logger.
 		logger.Init(verbose)
 
+		// Initialise CI environment detection.
+		env.Init()
+		if ciMode || nonInteractive {
+			env.SetCI(true)
+		}
+
 		// Load configuration (file + env).
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
@@ -64,6 +73,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./.devex.yaml)")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose/debug output")
 	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "output results as JSON")
+	rootCmd.PersistentFlags().BoolVar(&ciMode, "ci", false, "run in CI/non-interactive mode (suppresses prompts and colors)")
+	rootCmd.PersistentFlags().BoolVar(&nonInteractive, "non-interactive", false, "alias for --ci")
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

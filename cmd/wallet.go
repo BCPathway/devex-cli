@@ -1,16 +1,14 @@
 package cmd
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/BCPathway/devex-cli/internal/logger"
+	"github.com/BCPathway/devex-cli/internal/ui"
 	"github.com/BCPathway/devex-cli/pkg/keychain"
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 )
 
 var walletCmd = &cobra.Command{
@@ -75,22 +73,11 @@ func init() {
 func runWalletImport(cmd *cobra.Command, args []string) error {
 	key := importKeyFlag
 	if key == "" {
-		fmt.Print("🔑 Enter private key / secret seed (input will be hidden): ")
-		if term.IsTerminal(int(os.Stdin.Fd())) {
-			bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
-			fmt.Println() // new line after hidden input
-			if err != nil {
-				return fmt.Errorf("reading private key securely: %w", err)
-			}
-			key = string(bytePassword)
-		} else {
-			reader := bufio.NewReader(os.Stdin)
-			line, err := reader.ReadString('\n')
-			if err != nil {
-				return fmt.Errorf("reading private key from stdin: %w", err)
-			}
-			key = strings.TrimSpace(line)
+		pass, err := ui.PromptPassword("🔑 Enter private key / secret seed (input will be hidden): ")
+		if err != nil {
+			return fmt.Errorf("reading private key securely: %w", err)
 		}
+		key = pass
 	}
 
 	key = strings.TrimSpace(key)

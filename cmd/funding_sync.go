@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/BCPathway/devex-cli/internal/logger"
+	"github.com/BCPathway/devex-cli/internal/ui"
 	"github.com/BCPathway/devex-cli/pkg/drips"
 	"github.com/BCPathway/devex-cli/pkg/keychain"
 	"github.com/BCPathway/devex-cli/pkg/stellar"
@@ -122,7 +122,7 @@ func runFundingSync(cmd *cobra.Command, args []string) error {
 	// 6. Display safety warning and confirmation prompt
 	if !syncYes {
 		renderSyncWarningUI(diff, plan)
-		confirm, err := promptConfirmation("Confirm on-chain transaction? [y/N]: ")
+		confirm, err := ui.PromptConfirmation("Confirm on-chain transaction? [y/N]: ")
 		if err != nil {
 			return fmt.Errorf("reading confirmation: %w", err)
 		}
@@ -168,17 +168,6 @@ func resolveRPCURL() string {
 		return appConfig.Drips.RPCEndpoint
 	}
 	return ""
-}
-
-func promptConfirmation(promptText string) (bool, error) {
-	fmt.Print(promptText)
-	reader := bufio.NewReader(os.Stdin)
-	line, err := reader.ReadString('\n')
-	if err != nil {
-		return false, err
-	}
-	line = strings.TrimSpace(strings.ToLower(line))
-	return line == "y" || line == "yes", nil
 }
 
 func renderSyncWarningUI(diff *drips.SplitsDiff, plan *drips.SyncTxPlan) {
@@ -260,7 +249,7 @@ func runStellarFundingSync(_ *cobra.Command, _ []string) error {
 
 	if !syncYes {
 		renderStellarSyncWarningUI(plan)
-		confirm, err := promptConfirmation("Confirm Stellar multi-payment transaction? [y/N]: ")
+		confirm, err := ui.PromptConfirmation("Confirm Stellar multi-payment transaction? [y/N]: ")
 		if err != nil {
 			return fmt.Errorf("reading confirmation: %w", err)
 		}

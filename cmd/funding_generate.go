@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/BCPathway/devex-cli/internal/logger"
+	"github.com/BCPathway/devex-cli/internal/ui"
 	"github.com/BCPathway/devex-cli/pkg/drips"
 	"github.com/BCPathway/devex-cli/pkg/parser"
 	"github.com/BCPathway/devex-cli/pkg/stellar"
@@ -119,7 +119,7 @@ func runFundingGenerate(cmd *cobra.Command, args []string) error {
 			logger.Warn("could not load existing %s (%v), prompting for overwrite", generateOutput, loadErr)
 		}
 
-		action, promptErr := promptConflictAction(generateOutput, existing != nil && hasLockedSplits(existing))
+		action, promptErr := ui.PromptConflictAction(generateOutput, existing != nil && hasLockedSplits(existing))
 		if promptErr != nil {
 			return fmt.Errorf("reading confirmation: %w", promptErr)
 		}
@@ -190,39 +190,6 @@ func hasLockedSplits(cfg *drips.DripsConfigFile) bool {
 		}
 	}
 	return false
-}
-
-func promptConflictAction(path string, canMerge bool) (string, error) {
-	reader := bufio.NewReader(os.Stdin)
-	if canMerge {
-		fmt.Printf("⚠️  %s already exists and has locked splits. [M]erge (preserve locked) / [o]verwrite / [c]ancel [M/o/c]: ", path)
-	} else {
-		fmt.Printf("⚠️  %s already exists. [O]verwrite / [c]ancel [O/c]: ", path)
-	}
-
-	line, err := reader.ReadString('\n')
-	if err != nil {
-		return "", err
-	}
-	line = strings.TrimSpace(strings.ToLower(line))
-
-	if canMerge {
-		switch line {
-		case "", "m", "merge":
-			return "merge", nil
-		case "o", "overwrite":
-			return "overwrite", nil
-		default:
-			return "cancel", nil
-		}
-	} else {
-		switch line {
-		case "", "o", "overwrite", "y", "yes":
-			return "overwrite", nil
-		default:
-			return "cancel", nil
-		}
-	}
 }
 
 func renderGenerateSuccess(path string, cfg *drips.DripsConfigFile) {
@@ -319,7 +286,7 @@ func runStellarFundingGenerate(_ *cobra.Command, _ []string) error {
 		if loadErr != nil {
 			logger.Warn("could not load existing %s (%v), prompting for overwrite", outPath, loadErr)
 		}
-		action, promptErr := promptConflictAction(outPath, existing != nil && hasStellarLockedSplits(existing))
+		action, promptErr := ui.PromptConflictAction(outPath, existing != nil && hasStellarLockedSplits(existing))
 		if promptErr != nil {
 			return fmt.Errorf("reading confirmation: %w", promptErr)
 		}
