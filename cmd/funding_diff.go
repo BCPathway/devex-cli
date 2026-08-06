@@ -73,7 +73,7 @@ func runFundingDiff(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not determine target Drips ID or address for diff")
 	}
 
-	logger.Info("📡  fetching live on-chain splits for %s on chain %d…", targetID, appConfig.Drips.ChainID)
+	logger.Info("fetching live on-chain splits for %s on chain %d…", targetID, appConfig.Drips.ChainID)
 	subgraph := drips.NewSubgraphClient(appConfig.Drips.ChainID)
 	telemetry, err := subgraph.QueryStatusTelemetry(context.Background(), targetID)
 	if err != nil {
@@ -159,7 +159,7 @@ func runStellarFundingDiff(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("could not determine target Stellar Account ID for diff")
 	}
 
-	logger.Info("📡  fetching live Stellar telemetry for %s…", accountID)
+	logger.Info("fetching live Stellar telemetry for %s…", accountID)
 	client, err := stellar.NewClient(stellar.ClientConfig{
 		HorizonURL:        appConfig.Stellar.HorizonURL,
 		NetworkPassphrase: appConfig.Stellar.NetworkPassphrase,

@@ -89,7 +89,7 @@ func runFundingGenerate(cmd *cobra.Command, args []string) error {
 	}
 
 	deps := prioritiseDeps(result.Dependencies, generateTopN)
-	logger.Info("📡  resolving %d dependencies against Drips Network …", len(deps))
+	logger.Info("resolving %d dependencies against Drips Network …", len(deps))
 
 	client, err := drips.NewClient(drips.ClientConfig{
 		RPCEndpoint:   appConfig.Drips.RPCEndpoint,
@@ -132,11 +132,11 @@ func runFundingGenerate(cmd *cobra.Command, args []string) error {
 			logger.Info("🔀  merging with existing %s (preserving locked entries)…", generateOutput)
 			finalConfig = drips.MergeDripsConfig(existing, newlyGenerated)
 		case "overwrite":
-			logger.Info("⚠️  overwriting existing %s…", generateOutput)
+			logger.Info("overwriting existing %s…", generateOutput)
 			finalConfig = newlyGenerated
 		}
 	} else if err == nil && generateForce {
-		logger.Info("⚠️  overwriting existing %s due to --force flag…", generateOutput)
+		logger.Info("overwriting existing %s due to --force flag…", generateOutput)
 	}
 
 	if err := drips.SaveDripsConfig(generateOutput, finalConfig); err != nil {
@@ -194,7 +194,7 @@ func hasLockedSplits(cfg *drips.DripsConfigFile) bool {
 
 func renderGenerateSuccess(path string, cfg *drips.DripsConfigFile) {
 	fmt.Println()
-	fmt.Printf("  ✅  Successfully generated %s\n", path)
+	fmt.Printf("  Successfully generated %s\n", path)
 	fmt.Printf("  ─────────────────────────────────────────────────────\n")
 	fmt.Printf("  Project ID:        %s\n", cfg.ProjectID)
 	fmt.Printf("  Configured splits: %d dependencies\n", len(cfg.Splits))
@@ -247,7 +247,7 @@ func runStellarFundingGenerate(_ *cobra.Command, _ []string) error {
 	}
 
 	deps := prioritiseDeps(result.Dependencies, generateTopN)
-	logger.Info("📡  generating Stellar splits for %d dependencies …", len(deps))
+	logger.Info("generating Stellar splits for %d dependencies …", len(deps))
 
 	count := len(deps)
 	pctPerDep := 0
@@ -298,11 +298,11 @@ func runStellarFundingGenerate(_ *cobra.Command, _ []string) error {
 			logger.Info("🔀  merging with existing %s (preserving locked entries)…", outPath)
 			finalConfig = stellar.MergeStellarConfig(existing, newlyGenerated)
 		case "overwrite":
-			logger.Info("⚠️  overwriting existing %s…", outPath)
+			logger.Info("overwriting existing %s…", outPath)
 			finalConfig = newlyGenerated
 		}
 	} else if err == nil && generateForce {
-		logger.Info("⚠️  overwriting existing %s due to --force flag…", outPath)
+		logger.Info("overwriting existing %s due to --force flag…", outPath)
 	}
 
 	if err := stellar.SaveStellarConfig(outPath, finalConfig); err != nil {
@@ -330,7 +330,7 @@ func hasStellarLockedSplits(cfg *stellar.StellarConfigFile) bool {
 
 func renderStellarGenerateSuccess(path string, cfg *stellar.StellarConfigFile) {
 	fmt.Println()
-	fmt.Printf("  ✅  Successfully generated %s\n", path)
+	fmt.Printf("  Successfully generated %s\n", path)
 	fmt.Printf("  ─────────────────────────────────────────────────────\n")
 	fmt.Printf("  Stellar Account ID: %s\n", cfg.AccountID)
 	fmt.Printf("  Configured splits:  %d dependencies\n", len(cfg.Splits))

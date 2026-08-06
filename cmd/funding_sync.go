@@ -95,7 +95,7 @@ func runFundingSync(cmd *cobra.Command, args []string) error {
 	}
 
 	// 4. Check live on-chain state & calculate diff
-	logger.Info("📡  checking live on-chain splits for %s on chain %d…", senderAddr, appConfig.Drips.ChainID)
+	logger.Info("checking live on-chain splits for %s on chain %d…", senderAddr, appConfig.Drips.ChainID)
 	subgraph := drips.NewSubgraphClient(appConfig.Drips.ChainID)
 	telemetry, err := subgraph.QueryStatusTelemetry(context.Background(), senderAddr)
 	if err != nil {
@@ -106,7 +106,7 @@ func runFundingSync(cmd *cobra.Command, args []string) error {
 	if !diff.HasChanges() {
 		printOutput(map[string]any{"status": "in_sync", "changes": false}, func() {
 			fmt.Println()
-			fmt.Println("  ✅  On-chain splits are already in sync with .devex.drips.yaml. No transaction required.")
+			fmt.Println("  On-chain splits are already in sync with .devex.drips.yaml. No transaction required.")
 			fmt.Println()
 		})
 		return nil
@@ -133,7 +133,7 @@ func runFundingSync(cmd *cobra.Command, args []string) error {
 	}
 
 	// 7. Execute transaction on-chain
-	logger.Info("🚀  submitting transaction to DripsHub (%s)…", plan.ContractAddress)
+	logger.Info("submitting transaction to DripsHub (%s)…", plan.ContractAddress)
 	txHash, err := drips.ExecuteSyncTx(context.Background(), rpcURL, appConfig.Drips.ChainID, privateKey, plan)
 	if err != nil {
 		return fmt.Errorf("executing setSplits transaction: %w", err)
@@ -172,7 +172,7 @@ func resolveRPCURL() string {
 
 func renderSyncWarningUI(diff *drips.SplitsDiff, plan *drips.SyncTxPlan) {
 	fmt.Println()
-	fmt.Printf("  ⚠️  You are about to update on-chain splits on Drips Network\n")
+	fmt.Printf("  You are about to update on-chain splits on Drips Network\n")
 	fmt.Printf("  ────────────────────────────────────────────────────────────\n")
 	fmt.Printf("  Account:        %s\n", plan.SenderAddress)
 	fmt.Printf("  Contract:       %s (Chain %d)\n", plan.ContractAddress, plan.ChainID)
@@ -189,7 +189,7 @@ func renderSyncWarningUI(diff *drips.SplitsDiff, plan *drips.SyncTxPlan) {
 
 func renderSyncSuccessUI(txHash string, plan *drips.SyncTxPlan) {
 	fmt.Println()
-	fmt.Printf("  🚀  Transaction submitted successfully!\n")
+	fmt.Printf("  Transaction submitted successfully!\n")
 	fmt.Printf("  ────────────────────────────────────────────────────────────\n")
 	fmt.Printf("  Transaction Hash:  %s\n", txHash)
 	fmt.Printf("  Status:            Confirmed (Block confirmation received)\n")
@@ -259,7 +259,7 @@ func runStellarFundingSync(_ *cobra.Command, _ []string) error {
 		}
 	}
 
-	logger.Info("🚀  submitting multi-payment transaction to Stellar Horizon (%s)…", appConfig.Stellar.HorizonURL)
+	logger.Info("submitting multi-payment transaction to Stellar Horizon (%s)…", appConfig.Stellar.HorizonURL)
 	txHash, err := stellar.ExecuteSplitTx(context.Background(), appConfig.Stellar.HorizonURL, appConfig.Stellar.NetworkPassphrase, secretKey, plan)
 	if err != nil {
 		return fmt.Errorf("executing Stellar split transaction: %w", err)
@@ -283,7 +283,7 @@ func runStellarFundingSync(_ *cobra.Command, _ []string) error {
 
 func renderStellarSyncWarningUI(plan *stellar.SplitTxPlan) {
 	fmt.Println()
-	fmt.Printf("  ⚠️  You are about to execute a Stellar multi-payment distribution\n")
+	fmt.Printf("  You are about to execute a Stellar multi-payment distribution\n")
 	fmt.Printf("  ────────────────────────────────────────────────────────────\n")
 	fmt.Printf("  Source Account: %s\n", plan.SourceAccount)
 	fmt.Printf("  Network:        %s\n", strings.ToUpper(plan.NetworkName))
@@ -298,7 +298,7 @@ func renderStellarSyncWarningUI(plan *stellar.SplitTxPlan) {
 
 func renderStellarSyncSuccessUI(txHash string, plan *stellar.SplitTxPlan) {
 	fmt.Println()
-	fmt.Printf("  🚀  Stellar transaction submitted successfully!\n")
+	fmt.Printf("  Stellar transaction submitted successfully!\n")
 	fmt.Printf("  ────────────────────────────────────────────────────────────\n")
 	fmt.Printf("  Transaction Hash:  %s\n", txHash)
 	fmt.Printf("  Status:            Confirmed\n")

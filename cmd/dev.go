@@ -42,7 +42,7 @@ func runDev(cmd *cobra.Command, args []string) error {
 		startCmd += " -d"
 	}
 
-	logger.Info("🔧  starting dev environment: %s", startCmd)
+	logger.Info("starting dev environment: %s", startCmd)
 
 	parts := strings.Fields(startCmd)
 	if len(parts) == 0 {
@@ -59,6 +59,6 @@ func runDev(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("dev environment exited with error: %w", err)
 	}
 
-	logger.Info("✅  dev environment stopped cleanly")
+	logger.Info("dev environment stopped cleanly")
 	return nil
 }

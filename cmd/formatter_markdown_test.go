@@ -56,7 +56,7 @@ func TestMarkdownFormatter_FormatInspect(t *testing.T) {
 	}
 
 	// Verify Rows
-	if !strings.Contains(result, "| `github.com/stretchr/testify` | `v1.8.4` | ✅ | 5% | `0x123` |") {
+	if !strings.Contains(result, "| `github.com/stretchr/testify` | `v1.8.4` | | 5% | `0x123` |") {
 		t.Errorf("missing row 1: %s", result)
 	}
 	if !strings.Contains(result, "| `github.com/spf13/cobra` | `v1.7.0` | 🔒 | 3% | `0x456` |") {

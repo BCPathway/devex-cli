@@ -117,7 +117,7 @@ func runFundingSplit(cmd *cobra.Command, args []string) error {
 	}
 
 	printOutput(result, func() {
-		fmt.Printf("✅  Splits configured successfully\n")
+		fmt.Printf("Splits configured successfully\n")
 		fmt.Printf("    Transaction: %s\n", txHash)
 	})
 
@@ -246,7 +246,7 @@ func runStellarFundingSplit(_ *cobra.Command, _ []string) error {
 	}
 
 	printOutput(cfg, func() {
-		fmt.Printf("✅  Stellar splits saved to %s successfully\n", cfgPath)
+		fmt.Printf("Stellar splits saved to %s successfully\n", cfgPath)
 		fmt.Println("  💡 Run 'devex funding sync --network stellar' to execute this distribution on Stellar Network.")
 	})
 

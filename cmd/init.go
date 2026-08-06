@@ -46,7 +46,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Println("🚀  devex init — project configuration wizard")
+	fmt.Println("devex init — project configuration wizard")
 	fmt.Println(strings.Repeat("─", 48))
 
 	// --- Project metadata ---
@@ -54,19 +54,19 @@ func runInit(cmd *cobra.Command, args []string) error {
 	repoURL := ui.Prompt(reader, "Repository URL (optional)", "")
 
 	// --- Drips Network settings ---
-	fmt.Println("\n📡  Drips Network Configuration")
+	fmt.Println("\nDrips Network Configuration")
 	rpcEndpoint := ui.Prompt(reader, "RPC endpoint", "https://mainnet.optimism.io")
 	chainIDStr := ui.Prompt(reader, "Chain ID", "10")
 	walletAddress := ui.Prompt(reader, "Wallet address (optional)", "")
 
 	// --- Stellar Network settings ---
-	fmt.Println("\n🪐  Stellar Network Configuration")
+	fmt.Println("\nStellar Network Configuration")
 	horizonURL := ui.Prompt(reader, "Horizon endpoint", "https://horizon-testnet.stellar.org")
 	stellarAccountID := ui.Prompt(reader, "Stellar account ID (G... optional)", "")
 	networkPassphrase := ui.Prompt(reader, "Network passphrase", "Test SDF Network ; September 2015")
 
 	// --- Dev environment ---
-	fmt.Println("\n🔧  Development Environment")
+	fmt.Println("\nDevelopment Environment")
 	devCmd := ui.Prompt(reader, "Dev start command", "docker compose up")
 
 	chainID := 10
@@ -105,7 +105,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("writing %s: %w", filename, err)
 	}
 
-	fmt.Printf("\n✅  Created %s\n", filename)
+	fmt.Printf("\nCreated %s\n", filename)
 	logger.Debug("wrote config: %+v", cfg)
 	return nil
 }

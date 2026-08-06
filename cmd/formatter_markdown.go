@@ -164,7 +164,7 @@ func (f *MarkdownFormatter) renderStellarDiff(w io.Writer, diff *stellar.Stellar
 func statusToEmoji(status drips.VerificationStatus) string {
 	switch status {
 	case drips.StatusVerified:
-		return "✅"
+		return "OK"
 	case drips.StatusEscrow:
 		return "🔒"
 	case drips.StatusUnregistered:

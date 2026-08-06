@@ -79,7 +79,7 @@ func runFundingInspect(cmd *cobra.Command, args []string) error {
 
 	// Filter to direct dependencies first, then fill with indirect up to topN.
 	deps := prioritiseDeps(result.Dependencies, inspectTopN)
-	logger.Info("📡  resolving %d dependencies against Drips Network …", len(deps))
+	logger.Info("resolving %d dependencies against Drips Network …", len(deps))
 
 	// ── Step 2: Resolve against Drips registry ────────────────────────
 	client, err := drips.NewClient(drips.ClientConfig{
@@ -321,7 +321,7 @@ func renderInspectTable(output InspectOutput) {
 	fmt.Printf("  ── Summary ──────────────────────────────────────\n")
 	fmt.Printf("  Dependencies scanned:    %d\n", output.TotalScanned)
 	fmt.Printf("  Drips recipients found:  %d\n", output.TotalResolved)
-	fmt.Printf("    ✅ Verified:           %d\n", output.Summary.Verified)
+	fmt.Printf("    Verified:           %d\n", output.Summary.Verified)
 	fmt.Printf("    🔒 Escrow:             %d\n", output.Summary.Escrowed)
 	fmt.Printf("    ⬜ Unregistered:       %d\n", output.Summary.Unregistered)
 	fmt.Printf("  Total suggested split:   %d%%\n", output.Summary.TotalSplitPct)
@@ -340,7 +340,7 @@ func renderInspectTable(output InspectOutput) {
 func statusIndicator(status drips.VerificationStatus) string {
 	switch status {
 	case drips.StatusVerified:
-		return "✅"
+		return "OK"
 	case drips.StatusEscrow:
 		return "🔒"
 	case drips.StatusUnregistered:
@@ -385,7 +385,7 @@ type StellarRecipientRow struct {
 
 func runStellarFundingInspect(result *parser.ParseResult) error {
 	deps := prioritiseDeps(result.Dependencies, inspectTopN)
-	logger.Info("📡  analysing %d dependencies for Stellar Network split proposal …", len(deps))
+	logger.Info("analysing %d dependencies for Stellar Network split proposal …", len(deps))
 
 	// For Stellar, distribute percentages equally among direct deps, or all if no direct deps.
 	count := len(deps)

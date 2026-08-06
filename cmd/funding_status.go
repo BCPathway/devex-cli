@@ -65,7 +65,7 @@ func runFundingStatus(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("no Stellar Account ID specified — pass --account-id, create %s with 'devex funding generate --network stellar', or set stellar.account_id in config", cfgPath)
 		}
 
-		logger.Info("📡  querying Stellar Horizon telemetry for %s…", targetID)
+		logger.Info("querying Stellar Horizon telemetry for %s…", targetID)
 		client, err := stellar.NewClient(stellar.ClientConfig{
 			HorizonURL:        appConfig.Stellar.HorizonURL,
 			NetworkPassphrase: appConfig.Stellar.NetworkPassphrase,
@@ -96,7 +96,7 @@ func runFundingStatus(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no Drips ID or address specified — pass --drips-id/--address, create %s with 'devex funding generate', or set drips.wallet_address in config", statusConfig)
 	}
 
-	logger.Info("📡  querying Drips Subgraph telemetry for %s on chain %d…", targetID, appConfig.Drips.ChainID)
+	logger.Info("querying Drips Subgraph telemetry for %s on chain %d…", targetID, appConfig.Drips.ChainID)
 
 	subgraph := drips.NewSubgraphClient(appConfig.Drips.ChainID)
 	telemetry, err := subgraph.QueryStatusTelemetry(context.Background(), targetID)
@@ -143,7 +143,7 @@ func resolveStatusTargetID() string {
 // renderStatusTelemetryUI displays the 3 required sections in a clean terminal UI.
 func renderStatusTelemetryUI(t *drips.StatusTelemetry) {
 	fmt.Println()
-	fmt.Printf("  📡  Drips Network On-Chain Telemetry (Chain %d)\n", t.ChainID)
+	fmt.Printf("  Drips Network On-Chain Telemetry (Chain %d)\n", t.ChainID)
 	fmt.Printf("  Account:  %s\n", t.AccountID)
 	if t.Address != "" && t.Address != t.AccountID {
 		fmt.Printf("  Address:  %s\n", t.Address)
@@ -243,7 +243,7 @@ func resolveStellarStatusTargetID(configPath string) string {
 
 func renderStellarStatusTelemetryUI(t *stellar.StellarStatusTelemetry) {
 	fmt.Println()
-	fmt.Printf("  📡  Stellar Network On-Chain Telemetry (%s)\n", strings.ToUpper(t.Network))
+	fmt.Printf("  Stellar Network On-Chain Telemetry (%s)\n", strings.ToUpper(t.Network))
 	fmt.Printf("  Account:  %s\n", t.AccountID)
 	if t.Source != "" {
 		fmt.Printf("  Source:   %s\n", t.Source)

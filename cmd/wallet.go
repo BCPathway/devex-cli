@@ -98,7 +98,7 @@ func runWalletImport(cmd *cobra.Command, args []string) error {
 
 		printOutput(map[string]string{"status": "imported", "network": "stellar", "address": addr}, func() {
 			fmt.Println()
-			fmt.Printf("  ✅  Securely stored Stellar secret key in OS keychain.\n")
+			fmt.Printf("  Securely stored Stellar secret key in OS keychain.\n")
 			fmt.Printf("  ─────────────────────────────────────────────────────\n")
 			fmt.Printf("  Stellar Address: %s\n", addr)
 			fmt.Println()
@@ -118,7 +118,7 @@ func runWalletImport(cmd *cobra.Command, args []string) error {
 
 	printOutput(map[string]string{"status": "imported", "network": "drips", "address": addr}, func() {
 		fmt.Println()
-		fmt.Printf("  ✅  Securely stored private key in OS keychain.\n")
+		fmt.Printf("  Securely stored private key in OS keychain.\n")
 		fmt.Printf("  ─────────────────────────────────────────────────────\n")
 		fmt.Printf("  Wallet Address: %s\n", addr)
 		fmt.Println()
@@ -135,7 +135,7 @@ func runWalletRemove(cmd *cobra.Command, args []string) error {
 
 		printOutput(map[string]string{"status": "removed", "network": "stellar"}, func() {
 			fmt.Println()
-			fmt.Println("  ✅  Removed Stellar secret key from OS keychain.")
+			fmt.Println("  Removed Stellar secret key from OS keychain.")
 			fmt.Println()
 		})
 		return nil
@@ -147,7 +147,7 @@ func runWalletRemove(cmd *cobra.Command, args []string) error {
 
 	printOutput(map[string]string{"status": "removed", "network": "drips"}, func() {
 		fmt.Println()
-		fmt.Println("  ✅  Removed private key from OS keychain.")
+		fmt.Println("  Removed private key from OS keychain.")
 		fmt.Println()
 	})
 
