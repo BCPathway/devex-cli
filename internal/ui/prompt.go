@@ -45,7 +45,7 @@ func ConfirmOverwrite(path string) (bool, error) {
 	}
 
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf("⚠️  %s already exists. Overwrite? [y/N]: ", path)
+	fmt.Printf("%s already exists. Overwrite? [y/N]: ", path)
 	answer, err := reader.ReadString('\n')
 	if err != nil {
 		return false, err
@@ -80,9 +80,9 @@ func PromptConflictAction(path string, canMerge bool) (string, error) {
 
 	reader := bufio.NewReader(os.Stdin)
 	if canMerge {
-		fmt.Printf("⚠️  %s already exists and has locked splits. [M]erge (preserve locked) / [o]verwrite / [c]ancel [M/o/c]: ", path)
+		fmt.Printf("%s already exists and has locked splits. [M]erge (preserve locked) / [o]verwrite / [c]ancel [M/o/c]: ", path)
 	} else {
-		fmt.Printf("⚠️  %s already exists. [O]verwrite / [c]ancel [O/c]: ", path)
+		fmt.Printf("%s already exists. [O]verwrite / [c]ancel [O/c]: ", path)
 	}
 
 	line, err := reader.ReadString('\n')
@@ -126,7 +126,7 @@ func PromptPassword(promptText string) (string, error) {
 		}
 		return string(bytePassword), nil
 	}
-	
+
 	reader := bufio.NewReader(os.Stdin)
 	line, err := reader.ReadString('\n')
 	if err != nil {
